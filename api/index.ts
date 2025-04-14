@@ -84,7 +84,7 @@ app.put("/webhook/run", async (req, res) => {
 
     const result = data.status.description;
 
-    tokenMap.set(token, result);
+    await setTokenAsync(token, result);
 
     console.log(tokenMap);
 
@@ -213,5 +213,15 @@ const getStatusFromDescription = (description: string) => {
   }
   return "RUNTIME_ERROR";
 };
+
+async function setTokenAsync(
+  token: string,
+  status: string | null
+): Promise<void> {
+  return new Promise((resolve) => {
+    tokenMap.set(token, status);
+    resolve(); // immediately resolve since it's sync
+  });
+}
 
 export default app;
