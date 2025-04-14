@@ -31,6 +31,8 @@ app.post("/webhook/run/check", async (req, res) => {
 
     const submissionTokenArray: string[] = data.submissionTokenArray;
 
+    console.log(tokenMap);
+
     let allCompleted = true;
     for (const token of submissionTokenArray) {
       // Check if the token is in the map
@@ -65,11 +67,13 @@ app.put("/webhook/run", async (req, res) => {
 
     const token = data.token;
 
-    console.log(data);
+    console.log(token, data.token, data.status);
 
     const result = data.status.description;
 
     tokenMap.set(token, result);
+
+    console.log(tokenMap);
 
     res.status(200).send("OK");
   } catch (error) {
