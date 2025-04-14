@@ -11,6 +11,7 @@ app.use(express.json());
 const prisma = new PrismaClient();
 
 const tokenMap: Map<string, string | null> = new Map();
+const tokenMap1: { [key: string]: string | null } = {};
 
 const submissionMap: Map<
   string,
@@ -32,7 +33,15 @@ app.post("/webhook/run/check", async (req, res) => {
 
     const submissionTokenArray: string[] = data.submissionTokenArray;
 
+    console.log(submissionTokenArray);
     console.log(tokenMap);
+    console.log("alt", tokenMap1);
+
+    for (const token of submissionTokenArray) {
+      if (token in tokenMap1) {
+        console.log("Token found in map", token);
+      }
+    }
 
     let allCompleted = true;
     for (const token of submissionTokenArray) {
@@ -84,9 +93,11 @@ app.put("/webhook/run", async (req, res) => {
 
     const result = data.status.description;
 
-    await setTokenAsync(token, result);
+    tokenMap.set(token, result);
+    tokenMap1[token] = result;
 
     console.log(tokenMap);
+    console.log("alt", tokenMap1);
 
     res.status(200).send("OK");
   } catch (error) {
@@ -213,15 +224,5 @@ const getStatusFromDescription = (description: string) => {
   }
   return "RUNTIME_ERROR";
 };
-
-async function setTokenAsync(
-  token: string,
-  status: string | null
-): Promise<void> {
-  return new Promise((resolve) => {
-    tokenMap.set(token, status);
-    resolve(); // immediately resolve since it's sync
-  });
-}
 
 export default app;
