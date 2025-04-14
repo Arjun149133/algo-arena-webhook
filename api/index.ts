@@ -231,7 +231,7 @@ app.put("/webhook/submission", async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+  console.log("Server is running on port 3000!");
 });
 
 const getStatusFromDescription = (description: string) => {
