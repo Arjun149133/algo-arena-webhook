@@ -13,6 +13,8 @@ const prisma = new PrismaClient();
 const tokenMap: Map<string, string | null> = new Map();
 const tokenMap1: { [key: string]: string | null } = {};
 
+const arr: { token: string; result: string }[] = [];
+
 const submissionMap: Map<
   string,
   | "ACCEPTED"
@@ -36,6 +38,7 @@ app.post("/webhook/run/check", async (req, res) => {
     console.log(submissionTokenArray);
     console.log(tokenMap);
     console.log("alt", tokenMap1);
+    console.log("arr", arr);
 
     for (const token of submissionTokenArray) {
       if (token.token in tokenMap1) {
@@ -97,8 +100,11 @@ app.put("/webhook/run", async (req, res) => {
     tokenMap.set(token, result);
     tokenMap1[token] = result;
 
+    arr.push({ token, result });
+
     console.log(tokenMap);
     console.log("alt", tokenMap1);
+    console.log("arr", arr);
 
     res.status(200).send("OK");
   } catch (error) {
