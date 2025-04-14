@@ -31,22 +31,23 @@ app.post("/webhook/run/check", async (req, res) => {
   try {
     const data = req.body;
 
-    const submissionTokenArray: string[] = data.submissionTokenArray;
+    const submissionTokenArray: { token: string }[] = data.submissionTokenArray;
 
     console.log(submissionTokenArray);
     console.log(tokenMap);
     console.log("alt", tokenMap1);
 
     for (const token of submissionTokenArray) {
-      if (token in tokenMap1) {
+      if (token.token in tokenMap1) {
         console.log("Token found in map", token);
       }
     }
 
     let allCompleted = true;
     for (const token of submissionTokenArray) {
+      console.log("error", token);
       // Check if the token is in the map
-      if (!tokenMap.has(token)) {
+      if (!tokenMap.has(token.token)) {
         allCompleted = false;
         console.log("Token not found in map");
         break;
@@ -54,7 +55,7 @@ app.post("/webhook/run/check", async (req, res) => {
 
       console.log("token", token);
 
-      const status = tokenMap.get(token);
+      const status = tokenMap.get(token.token);
 
       if (status === undefined) {
         allCompleted = false;
