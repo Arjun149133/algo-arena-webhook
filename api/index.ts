@@ -1,7 +1,14 @@
 import express from "express";
-import { randomUUID } from "crypto";
 import { PrismaClient } from "@prisma/client";
 import cors from "cors";
+import "dotenv/config";
+
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 const app = express();
 
@@ -9,11 +16,6 @@ app.use(cors());
 app.use(express.json());
 
 const prisma = new PrismaClient();
-
-const tokenMap: Map<string, string | null> = new Map();
-const tokenMap1: { [key: string]: string | null } = {};
-
-const arr: { token: string; result: string }[] = [];
 
 const submissionMap: Map<
   string,
@@ -35,30 +37,10 @@ app.post("/webhook/run/check", async (req, res) => {
 
     const submissionTokenArray: { token: string }[] = data.submissionTokenArray;
 
-    console.log(submissionTokenArray);
-    console.log(tokenMap);
-    console.log("alt", tokenMap1);
-    console.log("arr", arr);
-
-    for (const token of submissionTokenArray) {
-      if (token.token in tokenMap1) {
-        console.log("Token found in map", token);
-      }
-    }
-
     let allCompleted = true;
     for (const token of submissionTokenArray) {
       console.log("error", token);
-      // Check if the token is in the map
-      if (!tokenMap.has(token.token)) {
-        allCompleted = false;
-        console.log("Token not found in map");
-        break;
-      }
-
-      console.log("token", token);
-
-      const status = tokenMap.get(token.token);
+      const status = redis.get(token.token);
 
       if (status === undefined) {
         allCompleted = false;
@@ -97,14 +79,7 @@ app.put("/webhook/run", async (req, res) => {
 
     const result = data.status.description;
 
-    tokenMap.set(token, result);
-    tokenMap1[token] = result;
-
-    arr.push({ token, result });
-
-    console.log(tokenMap);
-    console.log("alt", tokenMap1);
-    console.log("arr", arr);
+    redis.set(token, result);
 
     res.status(200).send("OK");
   } catch (error) {
