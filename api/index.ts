@@ -33,6 +33,12 @@ app.post("/webhook/run/check", async (req, res) => {
 
     let allCompleted = true;
     for (const token of submissionTokenArray) {
+      // Check if the token is in the map
+      if (!tokenMap.has(token)) {
+        allCompleted = false;
+        break;
+      }
+
       const status = tokenMap.get(token);
       if (status === null) {
         allCompleted = false;
