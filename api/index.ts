@@ -11,6 +11,7 @@ app.use(express.json());
 const prisma = new PrismaClient();
 
 const tokenMap: Map<string, string | null> = new Map();
+
 const submissionMap: Map<
   string,
   | "ACCEPTED"
@@ -38,16 +39,28 @@ app.post("/webhook/run/check", async (req, res) => {
       // Check if the token is in the map
       if (!tokenMap.has(token)) {
         allCompleted = false;
+        console.log("Token not found in map");
         break;
       }
 
+      console.log("token", token);
+
       const status = tokenMap.get(token);
+
+      if (status === undefined) {
+        allCompleted = false;
+        console.log("Token status is undefined");
+        break;
+      }
+
       if (status === null) {
         allCompleted = false;
+        console.log("Token status is null");
         break;
       }
     }
 
+    console.log("allcompleted", allCompleted);
     if (allCompleted) {
       res.status(200).json({
         status: "COMPLETED",
