@@ -27,7 +27,7 @@ type RunData = {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Hello World!!");
 });
 
 app.post("/webhook/run/create", async (req, res) => {
