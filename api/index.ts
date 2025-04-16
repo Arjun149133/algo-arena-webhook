@@ -17,15 +17,15 @@ app.use(express.json());
 
 const prisma = new PrismaClient();
 
-const submissionMap: Map<
-  string,
-  | "ACCEPTED"
-  | "WRONG_ANSWER"
-  | "TIME_LIMIT_EXCEEDED"
-  | "MEMORY_LIMIT_EXCEEDED"
-  | "RUNTIME_ERROR"
-  | "COMPILATION_ERROR"
-> = new Map();
+// const submissionMap: Map<
+//   string,
+//   | "ACCEPTED"
+//   | "WRONG_ANSWER"
+//   | "TIME_LIMIT_EXCEEDED"
+//   | "MEMORY_LIMIT_EXCEEDED"
+//   | "RUNTIME_ERROR"
+//   | "COMPILATION_ERROR"
+// > = new Map();
 
 app.get("/", (req, res) => {
   res.send("Hello World!!");
@@ -94,18 +94,25 @@ app.post("/webhook/submission/check", async (req, res) => {
 
     const submissionId: string = data.submissionId;
 
-    while (submissionMap.size > 0) {
-      const token = Array.from(submissionMap.keys())[0];
-      const status = submissionMap.get(token);
-      await prisma.tokenTestCase.update({
-        where: {
-          tokenId: token,
-        },
-        data: {
-          status: status,
-        },
-      });
-      submissionMap.delete(token);
+    const tokenTestCases = await prisma.tokenTestCase.findMany({
+      where: {
+        submissionId: submissionId,
+      },
+    });
+
+    for (const tokenTestCase of tokenTestCases) {
+      const status = await redis.get(tokenTestCase.tokenId);
+
+      if (status !== null && status !== undefined) {
+        await prisma.tokenTestCase.update({
+          where: {
+            tokenId: tokenTestCase.tokenId,
+          },
+          data: {
+            status: status,
+          },
+        });
+      }
     }
 
     const testCases = await prisma.tokenTestCase.findMany({
@@ -177,7 +184,7 @@ app.put("/webhook/submission", async (req, res) => {
 
     const status = getStatusFromDescription(data.status.description);
 
-    submissionMap.set(token, status);
+    redis.set(token, status);
 
     res.status(200).send("OK");
   } catch (error) {
