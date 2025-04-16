@@ -79,7 +79,7 @@ app.put("/webhook/run", async (req, res) => {
 
     const result = data.status.description;
 
-    redis.set(token, result);
+    await redis.set(token, result);
 
     res.status(200).send("OK");
   } catch (error) {
@@ -93,6 +93,31 @@ app.post("/webhook/submission/check", async (req, res) => {
     const data = req.body;
 
     const submissionId: string = data.submissionId;
+
+    const tokenTestCases = await prisma.tokenTestCase.findMany({
+      where: {
+        submissionId: submissionId,
+      },
+    });
+
+    console.log("tokenTestCases", tokenTestCases);
+
+    for (const tokenTestCase of tokenTestCases) {
+      const status = await redis.get(tokenTestCase.tokenId);
+
+      console.log("status", status);
+
+      if (status !== null && status !== undefined) {
+        await prisma.tokenTestCase.update({
+          where: {
+            tokenId: tokenTestCase.tokenId,
+          },
+          data: {
+            status: status,
+          },
+        });
+      }
+    }
 
     const testCases = await prisma.tokenTestCase.findMany({
       where: {
@@ -166,16 +191,7 @@ app.put("/webhook/submission", async (req, res) => {
 
     const status = getStatusFromDescription(data.status.description);
 
-    await prisma.tokenTestCase.update({
-      where: {
-        tokenId: token,
-      },
-      data: {
-        status: status,
-      },
-    });
-
-    // redis.set(token, status);
+    await redis.set(token, status);
 
     res.status(200).send("OK");
   } catch (error) {
