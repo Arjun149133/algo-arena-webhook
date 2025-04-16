@@ -100,8 +100,12 @@ app.post("/webhook/submission/check", async (req, res) => {
       },
     });
 
+    console.log("tokenTestCases", tokenTestCases);
+
     for (const tokenTestCase of tokenTestCases) {
       const status = await redis.get(tokenTestCase.tokenId);
+
+      console.log("status", status);
 
       if (status !== null && status !== undefined) {
         await prisma.tokenTestCase.update({
@@ -120,6 +124,8 @@ app.post("/webhook/submission/check", async (req, res) => {
         submissionId: submissionId,
       },
     });
+
+    console.log("testCases", testCases);
 
     let allCompleted = true;
 
