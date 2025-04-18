@@ -17,16 +17,6 @@ app.use(express.json());
 
 const prisma = new PrismaClient();
 
-// const submissionMap: Map<
-//   string,
-//   | "ACCEPTED"
-//   | "WRONG_ANSWER"
-//   | "TIME_LIMIT_EXCEEDED"
-//   | "MEMORY_LIMIT_EXCEEDED"
-//   | "RUNTIME_ERROR"
-//   | "COMPILATION_ERROR"
-// > = new Map();
-
 app.get("/", (req, res) => {
   res.send("Hello World!!");
 });
@@ -39,11 +29,9 @@ app.post("/webhook/run/check", async (req, res) => {
 
     let allCompleted = true;
     for (const token of submissionTokenArray) {
-      console.log("error", token);
       const status: { status: string; testResult: string } | null =
         await redis.get(token.token);
 
-      console.log(token, "status", status);
       if (status === undefined) {
         allCompleted = false;
         console.log("Token status is undefined");
@@ -63,14 +51,11 @@ app.post("/webhook/run/check", async (req, res) => {
       }
     }
 
-    console.log("allcompleted", allCompleted);
     if (allCompleted) {
       const result = [];
       for (const token of submissionTokenArray) {
         const finalResult: { status: string; testResult: string } | null =
           await redis.get(token.token);
-        console.log("finalResult", finalResult);
-        console.log("type", typeof finalResult);
 
         if (finalResult !== null && finalResult !== undefined) {
           result.push({
@@ -80,8 +65,6 @@ app.post("/webhook/run/check", async (req, res) => {
           });
         }
       }
-
-      console.log("result", result);
 
       res.status(200).json({
         status: "COMPLETED",
@@ -101,8 +84,6 @@ app.put("/webhook/run", async (req, res) => {
     const data = req.body;
 
     const token = data.token;
-
-    console.log(token, data.token, data.status);
 
     const status = data.status.description;
 
@@ -152,12 +133,8 @@ app.post("/webhook/submission/check", async (req, res) => {
       },
     });
 
-    console.log("tokenTestCases", tokenTestCases);
-
     for (const tokenTestCase of tokenTestCases) {
       const status = await redis.get(tokenTestCase.tokenId);
-
-      console.log("status", status);
 
       if (status !== null && status !== undefined) {
         await prisma.tokenTestCase.update({
@@ -176,8 +153,6 @@ app.post("/webhook/submission/check", async (req, res) => {
         submissionId: submissionId,
       },
     });
-
-    console.log("testCases", testCases);
 
     let allCompleted = true;
 
@@ -232,9 +207,6 @@ app.put("/webhook/submission", async (req, res) => {
   try {
     const data = req.body;
     const token: string = data.token;
-
-    console.log(token);
-    console.log(data);
 
     if (token === undefined) {
       res.status(400).send("Token is required");
