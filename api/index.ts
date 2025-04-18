@@ -40,8 +40,10 @@ app.post("/webhook/run/check", async (req, res) => {
     let allCompleted = true;
     for (const token of submissionTokenArray) {
       console.log("error", token);
-      const status = redis.get(token.token);
+      const status: { status: string; testResult: string } | null =
+        await redis.get(token.token);
 
+      console.log(token, "status", status);
       if (status === undefined) {
         allCompleted = false;
         console.log("Token status is undefined");
@@ -51,6 +53,12 @@ app.post("/webhook/run/check", async (req, res) => {
       if (status === null) {
         allCompleted = false;
         console.log("Token status is null");
+        break;
+      }
+
+      if (status.status.toLowerCase() === "processing") {
+        allCompleted = false;
+        console.log("Token status is Processing");
         break;
       }
     }
