@@ -59,15 +59,16 @@ app.post("/webhook/run/check", async (req, res) => {
     if (allCompleted) {
       const result = [];
       for (const token of submissionTokenArray) {
-        const finalResult = await redis.get(token.token);
+        const finalResult: { status: string; testResult: string } | null =
+          await redis.get(token.token);
         console.log("finalResult", finalResult);
+        console.log("type", typeof finalResult);
 
         if (finalResult !== null && finalResult !== undefined) {
-          const parsedResult = JSON.parse(finalResult as string);
           result.push({
             token: token.token,
-            status: parsedResult.status,
-            testResult: parsedResult.testResult,
+            status: finalResult.status,
+            testResult: finalResult.testResult,
           });
         }
       }
