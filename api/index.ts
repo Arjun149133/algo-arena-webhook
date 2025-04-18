@@ -57,8 +57,26 @@ app.post("/webhook/run/check", async (req, res) => {
 
     console.log("allcompleted", allCompleted);
     if (allCompleted) {
+      const result = [];
+      for (const token of submissionTokenArray) {
+        const finalResult = await redis.get(token.token);
+        console.log("finalResult", finalResult);
+
+        if (finalResult !== null && finalResult !== undefined) {
+          const parsedResult = JSON.parse(finalResult as string);
+          result.push({
+            token: token.token,
+            status: parsedResult.status,
+            testResult: parsedResult.testResult,
+          });
+        }
+      }
+
+      console.log("result", result);
+
       res.status(200).json({
         status: "COMPLETED",
+        result: result,
       });
     } else {
       res.status(200).json({ status: "PENDING" });
@@ -77,9 +95,34 @@ app.put("/webhook/run", async (req, res) => {
 
     console.log(token, data.token, data.status);
 
-    const result = data.status.description;
+    const status = data.status.description;
 
-    await redis.set(token, result);
+    let testResult = data.stdout;
+    // const input = Buffer.from(res.data.stdin, "base64").toString("utf8");
+    if (data.stderr) {
+      testResult = Buffer.from(data.stderr, "base64").toString("utf8");
+    } else if (data.compile_output) {
+      testResult = Buffer.from(data.compile_output, "base64").toString("utf8");
+    } else if (
+      data.stdout === null &&
+      data.stderr === null &&
+      data.compile_output === null
+    ) {
+      if (data.message) {
+        testResult = Buffer.from(data.message, "base64").toString("utf8");
+      } else {
+        testResult = data.status.description;
+      }
+    } else {
+      testResult = Buffer.from(data.stdout, "base64").toString("utf8");
+    }
+
+    const finalResult = {
+      status: status,
+      testResult: testResult,
+    };
+
+    await redis.set(token, JSON.stringify(finalResult));
 
     res.status(200).send("OK");
   } catch (error) {
